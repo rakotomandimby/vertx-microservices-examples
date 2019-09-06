@@ -35,7 +35,7 @@ First go in the `aggregation-http` directory, and open 4 terminals (one for each
 cd aggregation-http
 ```
 
-Then, launch the microservices:
+Then, launch the microservices using the "java" command:
 
 ```
 cd A
@@ -55,6 +55,18 @@ java -Djava.net.preferIPv4Stack=true -jar target/aggregation-http-C-1.0-SNAPSHOT
 ```
 cd D
 java -Djava.net.preferIPv4Stack=true -jar target/aggregation-http-D-1.0-SNAPSHOT-fat.jar -cluster -cp ../etc -conf src/main/config/config.json
+```
+
+But you can also launch the verticles with the "vertx" command line utility:
+
+```bash
+export VX=/data/home/vertx/SDK/vertx-3.8.1/bin/vertx
+export IPV4=" -Djava.net.preferIPv4Stack=true "
+export MAIN_VERTICLE="io.vertx.microservices.MainVerticle"
+${VX} start ${IPV4} --classpath="./aggregation-http/A/target/aggregation-http-a-1.0-SNAPSHOT-fat.jar:./aggregation-http/etc" -cluster -conf aggregation-http/A/src/main/config/config.json ${MAIN_VERTICLE} 
+${VX} start ${IPV4} --classpath="./aggregation-http/B/target/aggregation-http-b-1.0-SNAPSHOT-fat.jar:./aggregation-http/etc" -cluster -conf aggregation-http/B/src/main/config/config.json ${MAIN_VERTICLE} 
+${VX} start ${IPV4} --classpath="./aggregation-http/C/target/aggregation-http-c-1.0-SNAPSHOT-fat.jar:./aggregation-http/etc" -cluster -conf aggregation-http/C/src/main/config/config.json ${MAIN_VERTICLE} 
+${VX} start ${IPV4} --classpath="./aggregation-http/D/target/aggregation-http-d-1.0-SNAPSHOT-fat.jar:./aggregation-http/etc" -cluster -conf aggregation-http/D/src/main/config/config.json ${MAIN_VERTICLE} 
 ```
 
 Let's analyses these command lines:
