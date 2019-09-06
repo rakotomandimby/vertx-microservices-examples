@@ -17,6 +17,7 @@ import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
+import io.vertx.core.Promise;
 
 public class A extends AbstractVerticle {
 
@@ -69,20 +70,22 @@ public class A extends AbstractVerticle {
   private void hello(RoutingContext context) {
     String param = context.request().getParam("name");
 
-    Future<String> b = Future.future();
-    Future<String> c = Future.future();
-    Future<String> d = Future.future();
+    Promise <String> promiseB = Promise.promise(); Future<String> b = promiseB.future();
+    Promise <String> promiseC = Promise.promise(); Future<String> c = promiseC.future();
+    Promise <String> promiseD = Promise.promise(); Future<String> d = promiseD.future();
+
+    
 
     getB(client -> {
-      invoke("B", client, circuitB, param, b);
+      invoke("B", client, circuitB, param, promiseB);
     });
 
     getC(client -> {
-      invoke("C", client, circuitC, param, c);
+      invoke("C", client, circuitC, param, promiseC);
     });
 
     getD(client -> {
-      invoke("D", client, circuitD, param, d);
+      invoke("D", client, circuitD, param, promiseD);
     });
 
     CompositeFuture.all(b, c, d).setHandler(ar -> {
@@ -130,7 +133,7 @@ public class A extends AbstractVerticle {
     }
   }
 
-  private void invoke(String name, HttpClient client, CircuitBreaker circuit, String param, Future<String> future) {
+  private void invoke(String name, HttpClient client, CircuitBreaker circuit, String param, Promise<String> promise) {
     circuit.executeWithFallback(
         circuitFuture -> {
           if (client == null) {
@@ -138,7 +141,7 @@ public class A extends AbstractVerticle {
           } else {
             client.get("/?name=" + param, response -> {
               response.bodyHandler(buffer -> {
-                future.complete(buffer.toJsonObject().getString(name));
+                promise.complete(buffer.toJsonObject().getString(name));
                 circuitFuture.complete();
               });
             }).exceptionHandler(circuitFuture::fail)
@@ -147,7 +150,7 @@ public class A extends AbstractVerticle {
         },
         v -> {
           // the future has already been completed, a failure or timeout.
-          if (!future.isComplete()) future.complete("No service available (fallback)");
+          if (!promise.future().isComplete()) promise.complete("No service available (fallback)");
           return null;
         }
     );
